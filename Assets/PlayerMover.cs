@@ -16,6 +16,7 @@ public class PlayerMover : MonoBehaviour
     {
         myRigidbody = GetComponent<Rigidbody>();
         instance = this;
+        rotation = rotationTarget = View.eulerAngles.y;
 	}
 	
 	void FixedUpdate ()
