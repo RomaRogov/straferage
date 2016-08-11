@@ -7,16 +7,20 @@ public class PlayerMover : MonoBehaviour
     public Vector3 Shift;
 
     private Rigidbody myRigidbody;
-    //private float rotationSpeed;
     private float rotationTarget;
     private float rotation;
+    private float gyroRotation;
     private static PlayerMover instance;
+
+    private bool aimMode = false;
 
     void Start ()
     {
         myRigidbody = GetComponent<Rigidbody>();
         instance = this;
         rotation = rotationTarget = View.eulerAngles.y;
+
+        Input.gyro.enabled = true;
 	}
 	
 	void FixedUpdate ()
@@ -39,27 +43,31 @@ public class PlayerMover : MonoBehaviour
             Vector3 forward = View.TransformDirection(Vector3.forward);
             Vector3 right = View.TransformDirection(Vector3.right);
             
-            myRigidbody.AddForce((forward * mouseY + right * mouseX) * 40f);
-
-            /*if (Mathf.Abs(mouseY) > Mathf.Abs(mouseX))
-            {
-                myRigidbody.AddForce(View.TransformDirection(Vector3.forward) * mouseY * 40f);
-            }
-            else
-            {
-                if (Mathf.Abs(rotationSpeed) < Mathf.Abs(mouseX))
-                { rotationSpeed = mouseX; }
-            }*/
+            myRigidbody.AddForce((forward * mouseY + right * mouseX) * 30f);
         }
-        //rotationSpeed = Mathf.Lerp(rotationSpeed, 0f, Time.fixedDeltaTime);
-        //rotation += rotationSpeed;
+
+        if (aimMode)
+        {
+            gyroRotation -= Input.gyro.rotationRateUnbiased.y;
+        }
+        else
+        {
+            gyroRotation = Mathf.LerpAngle(gyroRotation, 0, Time.fixedDeltaTime * 5f);
+        }
+
         rotation = Mathf.LerpAngle(rotation, rotationTarget, Time.fixedDeltaTime * 10f);
         View.transform.position = transform.position + Shift;
-        View.transform.rotation = Quaternion.Euler(Vector3.up * rotation);
+        View.transform.rotation = Quaternion.Euler(Vector3.up * (rotation + gyroRotation));
 	}
 
     public static void TurnTo(RotateViewBtn.SideTypes side)
     {
         instance.rotationTarget += (side == RotateViewBtn.SideTypes.ToLeft ? -90 : 90);
+        instance.gyroRotation = 0;
+    }
+
+    public static void SetAimState(bool state)
+    {
+        instance.aimMode = state;
     }
 }
