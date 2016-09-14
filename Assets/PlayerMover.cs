@@ -1,4 +1,6 @@
 ﻿using UnityEngine;
+using UnityEngine.EventSystems;
+using System;
 using System.Collections;
 
 public class PlayerMover : MonoBehaviour
@@ -11,6 +13,7 @@ public class PlayerMover : MonoBehaviour
     private float rotation;
     private float gyroRotation;
     private static PlayerMover instance;
+    private int lastTouchID;
 
     private bool aimMode = false;
 
@@ -22,6 +25,20 @@ public class PlayerMover : MonoBehaviour
 
         Input.gyro.enabled = true;
 	}
+
+    void Update()
+    {
+        if (Input.GetMouseButtonDown(0) && !Application.isEditor)
+        {
+            Touch lastTouch = Array.Find<Touch>(Input.touches, touch => { return (touch.phase == TouchPhase.Began); });
+
+            int touchID = lastTouch.fingerId;
+            if (!EventSystem.current.IsPointerOverGameObject(touchID))
+            {
+                lastTouchID = touchID;
+            }
+        }
+    }
 	
 	void FixedUpdate ()
     {
@@ -36,8 +53,8 @@ public class PlayerMover : MonoBehaviour
             }
             else
             {
-                mouseX = Input.GetTouch(0).deltaPosition.x / (float)Screen.width * 500f;
-                mouseY = Input.GetTouch(0).deltaPosition.y / (float)Screen.height * 500f;
+                mouseX = Input.GetTouch(lastTouchID).deltaPosition.x / (float)Screen.width * 500f;
+                mouseY = Input.GetTouch(lastTouchID).deltaPosition.y / (float)Screen.height * 500f;
             }
 
             Vector3 forward = View.TransformDirection(Vector3.forward);
