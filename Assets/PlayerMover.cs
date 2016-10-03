@@ -13,7 +13,7 @@ public class PlayerMover : MonoBehaviour
     private float rotation;
     private float gyroRotation;
     private static PlayerMover instance;
-    private int lastTouchID;
+    private int? lastTouchID;
 
     private bool aimMode = false;
 
@@ -28,14 +28,18 @@ public class PlayerMover : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetMouseButtonDown(0) && !Application.isEditor)
+        if (!Application.isEditor && (Input.touchCount > 0))
         {
-            Touch lastTouch = Array.Find<Touch>(Input.touches, touch => { return (touch.phase == TouchPhase.Began); });
-
-            int touchID = lastTouch.fingerId;
-            if (!EventSystem.current.IsPointerOverGameObject(touchID))
+            if (lastTouchID.HasValue && (Input.GetTouch(lastTouchID.Value).phase == TouchPhase.Ended))
             {
-                lastTouchID = touchID;
+                lastTouchID = null;
+            }
+
+            int possibleTouchIndex = Array.FindIndex(Input.touches, touch => { return (touch.phase == TouchPhase.Began); });
+            
+            if ((possibleTouchIndex >= 0) && !EventSystem.current.IsPointerOverGameObject(Input.touches[possibleTouchIndex].fingerId))
+            {
+                lastTouchID = Input.touches[possibleTouchIndex].fingerId;
             }
         }
     }
@@ -53,10 +57,12 @@ public class PlayerMover : MonoBehaviour
             }
             else
             {
-                mouseX = Input.GetTouch(lastTouchID).deltaPosition.x / (float)Screen.width * 500f;
-                mouseY = Input.GetTouch(lastTouchID).deltaPosition.y / (float)Screen.height * 500f;
+                mouseX = (lastTouchID.HasValue ? (Input.GetTouch(lastTouchID.Value).deltaPosition.x / (float)Screen.width * 500f) : 0);
+                mouseY = (lastTouchID.HasValue ? (Input.GetTouch(lastTouchID.Value).deltaPosition.y / (float)Screen.height * 500f) : 0);
             }
 
+            mouseX = Mathf.Clamp(mouseX, 0, 10f);
+            mouseY = Mathf.Clamp(mouseY, 0, 10f);
             Vector3 forward = View.TransformDirection(Vector3.forward);
             Vector3 right = View.TransformDirection(Vector3.right);
             
