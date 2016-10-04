@@ -35,6 +35,8 @@ public class PlayerMover : MonoBehaviour
                 lastTouchID = null;
             }
 
+            if (lastTouchID != null) { return; }
+
             int possibleTouchIndex = Array.FindIndex(Input.touches, touch => { return (touch.phase == TouchPhase.Began); });
             
             if ((possibleTouchIndex >= 0) && !EventSystem.current.IsPointerOverGameObject(Input.touches[possibleTouchIndex].fingerId))
@@ -61,12 +63,14 @@ public class PlayerMover : MonoBehaviour
                 mouseY = (lastTouchID.HasValue ? (Input.GetTouch(lastTouchID.Value).deltaPosition.y / (float)Screen.height * 500f) : 0);
             }
 
-            mouseX = Mathf.Clamp(mouseX, 0, 10f);
-            mouseY = Mathf.Clamp(mouseY, 0, 10f);
+            mouseX = Mathf.Clamp(mouseX, -10f, 10f);
+            mouseY = Mathf.Clamp(mouseY, -10f, 10f);
             Vector3 forward = View.TransformDirection(Vector3.forward);
             Vector3 right = View.TransformDirection(Vector3.right);
             
             myRigidbody.AddForce((forward * mouseY + right * mouseX) * 30f);
+            float vel = Mathf.Clamp(myRigidbody.velocity.magnitude, -20f, 20f);
+            myRigidbody.velocity = myRigidbody.velocity.normalized * vel;
         }
 
         if (aimMode)
@@ -83,9 +87,9 @@ public class PlayerMover : MonoBehaviour
         View.transform.rotation = Quaternion.Euler(Vector3.up * (rotation + gyroRotation));
 	}
 
-    public static void TurnTo(RotateViewBtn.SideTypes side)
+    public static void TurnTo(UIPlayerComm.SideTypes side)
     {
-        instance.rotationTarget += (side == RotateViewBtn.SideTypes.ToLeft ? -90 : 90);
+        instance.rotationTarget += (side == UIPlayerComm.SideTypes.ToLeft ? -90 : 90);
         instance.gyroRotation = 0;
     }
 
