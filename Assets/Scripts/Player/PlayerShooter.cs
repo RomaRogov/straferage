@@ -12,6 +12,9 @@ public class PlayerShooter : MonoBehaviour
     public Rocket RocketFab;
     public GameObject RocketExplosionFab;
     public Light WeaponSpark;
+    public AudioSource PistolSound;
+    public AudioSource ShotgunSound;
+    public AudioSource RocketSound;
     public WeaponTypes SelectedWeapon;
     public float ZoomFOV = 20f;
     
@@ -53,16 +56,19 @@ public class PlayerShooter : MonoBehaviour
             {
                 case WeaponTypes.GUN:
                 case WeaponTypes.MACHINE_GUN:
+                    PistolSound.Play();
                     ShootWithRaycast(false, shootingPowers[SelectedWeapon]);
                     StartCoroutine(Spark());
                     lastShootTime = Time.time;
                     break;
                 case WeaponTypes.SHOTGUN:
+                    ShotgunSound.Play();
                     StartCoroutine(Spark());
                     for (int i = 0; i < 5; i++) { ShootWithRaycast(true, shootingPowers[SelectedWeapon]); }
                     lastShootTime = Time.time;
                     break;
                 case WeaponTypes.ROCKET:
+                    RocketSound.Play();
                     Instantiate(RocketFab).Init(shootingPowers[SelectedWeapon], transform.TransformPoint(Vector3.forward), transform.rotation, RocketExplosionFab);
                     lastShootTime = Time.time;
                     break;
@@ -94,6 +100,7 @@ public class PlayerShooter : MonoBehaviour
             targetFOV = normalFOV;
             if ((lastShootTime + shootingDelays[SelectedWeapon]) < Time.time)
             {
+                PistolSound.Play();
                 StartCoroutine(Spark());
                 ShootWithRaycast(false, shootingPowers[SelectedWeapon]);
                 lastShootTime = Time.time;
