@@ -30,6 +30,11 @@ public class PlayerMover : MonoBehaviour
     {
         if (!Application.isEditor && (Input.touchCount > 0))
         {
+            if (lastTouchID.HasValue && (lastTouchID.Value > (Input.touchCount - 1)))
+            {
+                lastTouchID = null;
+            }
+
             if (lastTouchID.HasValue && (Input.GetTouch(lastTouchID.Value).phase == TouchPhase.Ended))
             {
                 lastTouchID = null;

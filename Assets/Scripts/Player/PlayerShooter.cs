@@ -6,17 +6,28 @@ using System.Collections.Generic;
 //Should be on PlayerMover
 public class PlayerShooter : MonoBehaviour
 {
-    public enum WeaponTypes { GUN = 0, SHOTGUN, MACHINE_GUN, SNIPER_GUN }
+    public enum WeaponTypes { GUN = 0, SHOTGUN, MACHINE_GUN, ROCKET, SNIPER_GUN }
 
     public GameObject DustParticleFab;
+    public Rocket RocketFab;
+    public GameObject RocketExplosionFab;
+    public Light WeaponSpark;
     public WeaponTypes SelectedWeapon;
     public float ZoomFOV = 20f;
-
+    
     private Dictionary<WeaponTypes, float> shootingDelays = new Dictionary<WeaponTypes, float>() {
         { WeaponTypes.GUN, .5f },
         { WeaponTypes.SHOTGUN, 1f },
-        { WeaponTypes.MACHINE_GUN, .1f },
-        { WeaponTypes.SNIPER_GUN, 0f }
+        { WeaponTypes.MACHINE_GUN, .2f },
+        { WeaponTypes.ROCKET, 2f },
+        { WeaponTypes.SNIPER_GUN, 2f }
+    };
+    private Dictionary<WeaponTypes, float> shootingPowers = new Dictionary<WeaponTypes, float>() {
+        { WeaponTypes.GUN, 5f },
+        { WeaponTypes.SHOTGUN, 5f },
+        { WeaponTypes.MACHINE_GUN, 5f },
+        { WeaponTypes.ROCKET, 50f },
+        { WeaponTypes.SNIPER_GUN, 30f }
     };
 
     private static PlayerShooter instance;
@@ -42,17 +53,24 @@ public class PlayerShooter : MonoBehaviour
             {
                 case WeaponTypes.GUN:
                 case WeaponTypes.MACHINE_GUN:
-                    ShootWithRaycast(false, 5f);
+                    ShootWithRaycast(false, shootingPowers[SelectedWeapon]);
+                    StartCoroutine(Spark());
+                    lastShootTime = Time.time;
                     break;
                 case WeaponTypes.SHOTGUN:
-                    for (int i = 0; i < 5; i++) { ShootWithRaycast(true, 5f); }
+                    StartCoroutine(Spark());
+                    for (int i = 0; i < 5; i++) { ShootWithRaycast(true, shootingPowers[SelectedWeapon]); }
+                    lastShootTime = Time.time;
+                    break;
+                case WeaponTypes.ROCKET:
+                    Instantiate(RocketFab).Init(shootingPowers[SelectedWeapon], transform.TransformPoint(Vector3.forward), transform.rotation, RocketExplosionFab);
+                    lastShootTime = Time.time;
                     break;
                 case WeaponTypes.SNIPER_GUN:
-                    ShootWithRaycast(false, 15f);
+                    targetFOV = ZoomFOV;
                     fire = false;
                     break;
             }
-            lastShootTime = Time.time;
         }
 
         myCam.fieldOfView = Mathf.Lerp(myCam.fieldOfView, targetFOV, Time.deltaTime * 10f);
@@ -65,10 +83,6 @@ public class PlayerShooter : MonoBehaviour
         switch (SelectedWeapon)
         {
             case WeaponTypes.MACHINE_GUN: lastShootTime = Time.time; break; //Fake the first shot for machine gun
-            case WeaponTypes.SNIPER_GUN:
-                targetFOV = ZoomFOV;
-                fire = false;
-                break;
         }
     }
 
@@ -77,15 +91,28 @@ public class PlayerShooter : MonoBehaviour
         fire = false;
         if (SelectedWeapon == WeaponTypes.SNIPER_GUN)
         {
-            fire = true;
             targetFOV = normalFOV;
+            if ((lastShootTime + shootingDelays[SelectedWeapon]) < Time.time)
+            {
+                StartCoroutine(Spark());
+                ShootWithRaycast(false, shootingPowers[SelectedWeapon]);
+                lastShootTime = Time.time;
+            }
         }
     }
 
     private void ShootWithRaycast(bool randomizeDirection, float power)
     {
-        Array.ForEach(Physics.RaycastAll(transform.position, transform.forward + (randomizeDirection ? UnityEngine.Random.onUnitSphere * .05f : Vector3.zero)), hit =>
-        { Instantiate(instance.DustParticleFab, hit.point, Quaternion.identity); });
+        Vector3 direction = transform.forward + (randomizeDirection ? UnityEngine.Random.onUnitSphere * .05f : Vector3.zero);
+        Array.ForEach(Physics.RaycastAll(transform.position, direction), hit =>
+        {
+            Enemy shotEnemy = (hit.rigidbody ? hit.rigidbody.GetComponent<Enemy>() : null);
+            if (shotEnemy != null)
+            {
+                shotEnemy.ApplyShot(power, hit.point, direction);
+            }
+            Instantiate(instance.DustParticleFab, hit.point, Quaternion.identity);
+        });
     }
 
     private void ChangeWeapon(int direction)
@@ -102,6 +129,13 @@ public class PlayerShooter : MonoBehaviour
             return;
         }
         SelectedWeapon = arr[(int)SelectedWeapon + direction];
+    }
+
+    private IEnumerator Spark()
+    {
+        WeaponSpark.enabled = true;
+        yield return new WaitForSeconds(.1f);
+        WeaponSpark.enabled = false;
     }
 
     public static void StartShoot() { instance.StartShootInternal(); }
