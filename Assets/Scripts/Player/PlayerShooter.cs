@@ -61,12 +61,6 @@ public class PlayerShooter : MonoBehaviour
                     StartCoroutine(Spark());
                     lastShootTime = Time.time;
                     break;
-                case WeaponTypes.SHOTGUN:
-                    ShotgunSound.Play();
-                    StartCoroutine(Spark());
-                    for (int i = 0; i < 5; i++) { ShootWithRaycast(true, shootingPowers[SelectedWeapon]); }
-                    lastShootTime = Time.time;
-                    break;
                 case WeaponTypes.ROCKET:
                     RocketSound.Play();
                     Instantiate(RocketFab).Init(shootingPowers[SelectedWeapon], transform.TransformPoint(Vector3.forward), transform.rotation, RocketExplosionFab);
@@ -88,23 +82,37 @@ public class PlayerShooter : MonoBehaviour
         
         switch (SelectedWeapon)
         {
-            case WeaponTypes.MACHINE_GUN: lastShootTime = Time.time; break; //Fake the first shot for machine gun
+            case WeaponTypes.MACHINE_GUN:
+                lastShootTime = Time.time;
+                break; //Fake the first shot for machine gun
+            case WeaponTypes.SHOTGUN:
+                ShotgunSound.Play();
+                StartCoroutine(Spark());
+                for (int i = 0; i < 5; i++) { ShootWithRaycast(true, shootingPowers[SelectedWeapon]); }
+                break;
         }
     }
 
     private void EndShootInternal()
     {
         fire = false;
-        if (SelectedWeapon == WeaponTypes.SNIPER_GUN)
+        switch (SelectedWeapon)
         {
-            targetFOV = normalFOV;
-            if ((lastShootTime + shootingDelays[SelectedWeapon]) < Time.time)
-            {
-                PistolSound.Play();
+            case WeaponTypes.SNIPER_GUN:
+                targetFOV = normalFOV;
+                if ((lastShootTime + shootingDelays[SelectedWeapon]) < Time.time)
+                {
+                    PistolSound.Play();
+                    StartCoroutine(Spark());
+                    ShootWithRaycast(false, shootingPowers[SelectedWeapon]);
+                    lastShootTime = Time.time;
+                }
+                break;
+            case WeaponTypes.SHOTGUN:
+                ShotgunSound.Play();
                 StartCoroutine(Spark());
-                ShootWithRaycast(false, shootingPowers[SelectedWeapon]);
-                lastShootTime = Time.time;
-            }
+                for (int i = 0; i < 5; i++) { ShootWithRaycast(true, shootingPowers[SelectedWeapon]); }
+                break;
         }
     }
 
