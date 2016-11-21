@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-	using UnityEngine.EventSystems;
+using UnityEngine.EventSystems;
 using System;
 using System.Collections;
 
@@ -11,11 +11,14 @@ public class PlayerMover : MonoBehaviour
     private Rigidbody myRigidbody;
     private float rotationTarget;
     private float rotation;
+    private float guideRotation;
     private float gyroRotation;
     private static PlayerMover instance;
     private int? lastTouchID;
+    private BezierCurve guideInstance;
 
     private bool aimMode = false;
+
 
     void Start ()
     {
@@ -120,9 +123,29 @@ public class PlayerMover : MonoBehaviour
         }
 
         rotation = Mathf.LerpAngle(rotation, rotationTarget, Time.fixedDeltaTime * 10f);
+        
+        if (guideInstance != null)
+        {
+            guideRotation = Mathf.LerpAngle(guideRotation, Quaternion.LookRotation(guideInstance.GetDirection(guideInstance.GetPointValue(transform.position))).eulerAngles.y, Time.fixedDeltaTime * 10f);
+        }
+
         View.transform.position = transform.position + Shift;
-        View.transform.rotation = Quaternion.Euler(Vector3.up * (rotation + gyroRotation));
-	}
+        View.transform.rotation = Quaternion.Euler(Vector3.up * (rotation + gyroRotation + guideRotation));
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        BezierCurve possibleGuide = other.GetComponent<BezierCurve>();
+        if (possibleGuide != null) { guideInstance = possibleGuide; }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (guideInstance != null && guideInstance.GetComponent<Collider>() == other)
+        {
+            guideInstance = null;
+        }
+    }
 
     public static void TurnTo(UIPlayerComm.SideTypes side)
     {
