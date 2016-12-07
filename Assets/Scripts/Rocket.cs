@@ -16,7 +16,16 @@ public class Rocket : MonoBehaviour
         transform.rotation = rotation;
 
         myBody = GetComponent<Rigidbody>();
-        myBody.AddForce(transform.forward * 10f, ForceMode.VelocityChange);
+        myBody.AddForce(transform.forward * 50f * power, ForceMode.Impulse);
+
+        StartCoroutine(WaitForGravity(power));
+    }
+
+    IEnumerator WaitForGravity(float power)
+    {
+        yield return new WaitForSeconds(power * 2f);
+        //myBody.velocity = Vector3.zero;
+        myBody.useGravity = true;
     }
 
     void OnCollisionEnter(Collision collider)

@@ -40,6 +40,7 @@ public class PlayerShooter : MonoBehaviour
     private float lastShootTime;
     private float normalFOV;
     private float targetFOV = 60f;
+    private float rocketPower = 0f;
 
     void Awake()
     {
@@ -48,27 +49,30 @@ public class PlayerShooter : MonoBehaviour
         normalFOV = myCam.fieldOfView;
     }
 
+    private bool delayEnded { get { return ((lastShootTime + shootingDelays[SelectedWeapon]) < Time.time); } }
+    private bool canShoot { get { return (fire && delayEnded); } }
+
     void Update()
     {
-        if (fire && ((lastShootTime + shootingDelays[SelectedWeapon]) < Time.time))
+        if (fire)
         {
             switch (SelectedWeapon)
             {
                 case WeaponTypes.GUN:
                 case WeaponTypes.MACHINE_GUN:
-                    PistolSound.Play();
-                    ShootWithRaycast(false, shootingPowers[SelectedWeapon]);
-                    StartCoroutine(Spark());
-                    lastShootTime = Time.time;
+                    if (delayEnded)
+                    {
+                        PistolSound.Play();
+                        ShootWithRaycast(false, shootingPowers[SelectedWeapon]);
+                        StartCoroutine(Spark());
+                        lastShootTime = Time.time;
+                    }
                     break;
                 case WeaponTypes.ROCKET:
-                    RocketSound.Play();
-                    Instantiate(RocketFab).Init(shootingPowers[SelectedWeapon], transform.TransformPoint(Vector3.forward), transform.rotation, RocketExplosionFab);
-                    lastShootTime = Time.time;
+                    rocketPower = Mathf.Lerp(rocketPower, 1f, Time.deltaTime);
                     break;
                 case WeaponTypes.SNIPER_GUN:
                     targetFOV = ZoomFOV;
-                    fire = false;
                     break;
             }
         }
@@ -86,34 +90,45 @@ public class PlayerShooter : MonoBehaviour
                 lastShootTime = Time.time;
                 break; //Fake the first shot for machine gun
             case WeaponTypes.SHOTGUN:
-                ShotgunSound.Play();
-                StartCoroutine(Spark());
-                for (int i = 0; i < 5; i++) { ShootWithRaycast(true, shootingPowers[SelectedWeapon]); }
+                if (delayEnded)
+                {
+                    ShotgunSound.Play();
+                    StartCoroutine(Spark());
+                    for (int i = 0; i < 5; i++) { ShootWithRaycast(true, shootingPowers[SelectedWeapon]); }
+                }
                 break;
         }
     }
 
     private void EndShootInternal()
     {
-        fire = false;
-        switch (SelectedWeapon)
+        if (canShoot)
         {
-            case WeaponTypes.SNIPER_GUN:
-                targetFOV = normalFOV;
-                if ((lastShootTime + shootingDelays[SelectedWeapon]) < Time.time)
-                {
+            switch (SelectedWeapon)
+            {
+                case WeaponTypes.SNIPER_GUN:
+                    targetFOV = normalFOV;
                     PistolSound.Play();
                     StartCoroutine(Spark());
                     ShootWithRaycast(false, shootingPowers[SelectedWeapon]);
                     lastShootTime = Time.time;
-                }
-                break;
-            case WeaponTypes.SHOTGUN:
-                ShotgunSound.Play();
-                StartCoroutine(Spark());
-                for (int i = 0; i < 5; i++) { ShootWithRaycast(true, shootingPowers[SelectedWeapon]); }
-                break;
+                    break;
+                case WeaponTypes.SHOTGUN:
+                    ShotgunSound.Play();
+                    StartCoroutine(Spark());
+                    for (int i = 0; i < 5; i++) { ShootWithRaycast(true, shootingPowers[SelectedWeapon]); }
+                    lastShootTime = Time.time;
+                    break;
+                case WeaponTypes.ROCKET:
+                    RocketSound.Play();
+                    Instantiate(RocketFab).Init(rocketPower, transform.TransformPoint(Vector3.forward), transform.rotation, RocketExplosionFab);
+                    lastShootTime = Time.time;
+                    rocketPower = 0f;
+                    break;
+            }
         }
+
+        fire = false;
     }
 
     private void ShootWithRaycast(bool randomizeDirection, float power)
