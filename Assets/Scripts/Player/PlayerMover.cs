@@ -11,7 +11,8 @@ public class PlayerMover : MonoBehaviour
     private Rigidbody myRigidbody;
     private float rotationTarget;
     private float rotation;
-    private float guideRotation;
+    //private float guideRotation;
+    private float gyroAngle;
     private float gyroRotation;
     private static PlayerMover instance;
     private int? lastTouchID;
@@ -106,16 +107,12 @@ public class PlayerMover : MonoBehaviour
         float vel = Mathf.Clamp(myRigidbody.velocity.magnitude, -20f, 20f);
         myRigidbody.velocity = myRigidbody.velocity.normalized * vel;
 
-        if (aimMode)
-        {
-            gyroRotation -= Input.gyro.rotationRateUnbiased.y;
-            if (Input.GetButton("Target Left")) { gyroRotation -= 1f; }
-            if (Input.GetButton("Target Right")) { gyroRotation += 1f; }
-        }
-        else
-        {
-            gyroRotation = Mathf.LerpAngle(gyroRotation, 0, Time.fixedDeltaTime * 5f);
-        }
+        //if (aimMode)
+        //{
+        gyroAngle -= Input.gyro.rotationRateUnbiased.y;
+        if (Input.GetButton("Target Left")) { gyroRotation -= 1f; }
+        if (Input.GetButton("Target Right")) { gyroRotation += 1f; }
+        gyroRotation += gyroAngle * .1f;
 
         if (Input.GetButton("Stop"))
         {
@@ -124,13 +121,13 @@ public class PlayerMover : MonoBehaviour
 
         rotation = Mathf.LerpAngle(rotation, rotationTarget, Time.fixedDeltaTime * 10f);
         
-        if (guideInstance != null)
+        /*if (guideInstance != null)
         {
             guideRotation = Mathf.LerpAngle(guideRotation, Quaternion.LookRotation(guideInstance.GetDirection(guideInstance.GetPointValue(transform.position))).eulerAngles.y, Time.fixedDeltaTime * 10f);
-        }
+        }*/
 
         View.transform.position = transform.position + Shift;
-        View.transform.rotation = Quaternion.Euler(Vector3.up * (rotation + gyroRotation + guideRotation));
+        View.transform.rotation = Quaternion.Euler(Vector3.up * (rotation + gyroRotation));
     }
 
     private void OnTriggerEnter(Collider other)
@@ -156,5 +153,10 @@ public class PlayerMover : MonoBehaviour
     public static void SetAimState(bool state)
     {
         instance.aimMode = state;
+    }
+
+    public static void Calibrate()
+    {
+        instance.gyroAngle = 0;
     }
 }

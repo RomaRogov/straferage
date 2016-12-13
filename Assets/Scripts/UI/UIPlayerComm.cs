@@ -33,4 +33,9 @@ public class UIPlayerComm : MonoBehaviour
     {
         PlayerShooter.NextWeapon();
     }
+
+    public void Calibrate()
+    {
+        PlayerMover.Calibrate();
+    }
 }
