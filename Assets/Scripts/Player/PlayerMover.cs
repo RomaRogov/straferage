@@ -11,11 +11,7 @@ public class PlayerMover : MonoBehaviour
     private Rigidbody myRigidbody;
     private float rotationTarget;
     private float rotation;
-<<<<<<< c5f6b76fa6aef1f942289844e916c62bdf30057e
-    //private float guideRotation;
-=======
-    private float guideRotation;
->>>>>>> 4megre
+    private float gyroUpDown;
     private float gyroAngle;
     private float gyroRotation;
     private static PlayerMover instance;
@@ -23,7 +19,7 @@ public class PlayerMover : MonoBehaviour
     private BezierCurve guideInstance;
 
     private bool aimMode = false;
-
+    private bool calibrating = false;
 
     void Start ()
     {
@@ -117,12 +113,19 @@ public class PlayerMover : MonoBehaviour
         if (Input.GetButton("Target Left")) { gyroRotation -= 1f; }
         if (Input.GetButton("Target Right")) { gyroRotation += 1f; }
 
-        gyroRotation += Mathf.Clamp(gyroAngle, -20f, 20f) * .1f;//Mathf.Clamp(Mathf.Abs(gyroAngle) - 1f, 0, 20f) * Mathf.Sign(gyroAngle) * .1f;
-        //}
-        //else
-        //{
-        //    gyroRotation = Mathf.LerpAngle(gyroRotation, 0, Time.fixedDeltaTime * 5f);
-        //}
+        gyroRotation += gyroAngle * .1f;
+        if (calibrating)
+        {
+            if (Mathf.Abs(gyroUpDown) > .01f)
+            {
+                gyroUpDown = Mathf.Lerp(gyroUpDown, 0, Time.fixedDeltaTime * 10f);
+            }
+            else
+            {
+                calibrating = false;
+            }
+        }
+        gyroUpDown -= Input.gyro.rotationRateUnbiased.x;
 
         if (Input.GetButton("Stop"))
         {
@@ -130,14 +133,9 @@ public class PlayerMover : MonoBehaviour
         }
 
         rotation = Mathf.LerpAngle(rotation, rotationTarget, Time.fixedDeltaTime * 10f);
-        
-        /*if (guideInstance != null)
-        {
-            guideRotation = Mathf.LerpAngle(guideRotation, Quaternion.LookRotation(guideInstance.GetDirection(guideInstance.GetPointValue(transform.position))).eulerAngles.y, Time.fixedDeltaTime * 10f);
-        }*/
 
         View.transform.position = transform.position + Shift;
-        View.transform.rotation = Quaternion.Euler(Vector3.up * (rotation + gyroRotation));
+        View.transform.rotation = Quaternion.Euler(Vector3.up * (rotation + gyroRotation) + Vector3.right * gyroUpDown);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -157,7 +155,6 @@ public class PlayerMover : MonoBehaviour
     public static void TurnTo(UIPlayerComm.SideTypes side)
     {
         instance.rotationTarget += (side == UIPlayerComm.SideTypes.ToLeft ? -90 : 90);
-        instance.gyroRotation = 0;
     }
 
     public static void SetAimState(bool state)
@@ -168,5 +165,6 @@ public class PlayerMover : MonoBehaviour
     public static void Calibrate()
     {
         instance.gyroAngle = 0;
+        instance.calibrating = true;
     }
 }
