@@ -11,7 +11,11 @@ public class PlayerMover : MonoBehaviour
     private Rigidbody myRigidbody;
     private float rotationTarget;
     private float rotation;
+<<<<<<< c5f6b76fa6aef1f942289844e916c62bdf30057e
     //private float guideRotation;
+=======
+    private float guideRotation;
+>>>>>>> 4megre
     private float gyroAngle;
     private float gyroRotation;
     private static PlayerMover instance;
@@ -112,7 +116,13 @@ public class PlayerMover : MonoBehaviour
         gyroAngle -= Input.gyro.rotationRateUnbiased.y;
         if (Input.GetButton("Target Left")) { gyroRotation -= 1f; }
         if (Input.GetButton("Target Right")) { gyroRotation += 1f; }
-        gyroRotation += gyroAngle * .1f;
+
+        gyroRotation += Mathf.Clamp(gyroAngle, -20f, 20f) * .1f;//Mathf.Clamp(Mathf.Abs(gyroAngle) - 1f, 0, 20f) * Mathf.Sign(gyroAngle) * .1f;
+        //}
+        //else
+        //{
+        //    gyroRotation = Mathf.LerpAngle(gyroRotation, 0, Time.fixedDeltaTime * 5f);
+        //}
 
         if (Input.GetButton("Stop"))
         {
