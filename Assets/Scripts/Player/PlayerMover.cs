@@ -11,9 +11,9 @@ public class PlayerMover : MonoBehaviour
     private Rigidbody myRigidbody;
     private float rotationTarget;
     private float rotation;
-    private float gyroUpDown;
+    //private float gyroUpDown;
     private float gyroAngle;
-    private float gyroRotation;
+    //private float gyroRotation;
     private static PlayerMover instance;
     private int? lastTouchID;
     private BezierCurve guideInstance;
@@ -107,13 +107,16 @@ public class PlayerMover : MonoBehaviour
         float vel = Mathf.Clamp(myRigidbody.velocity.magnitude, -20f, 20f);
         myRigidbody.velocity = myRigidbody.velocity.normalized * vel;
 
-        //if (aimMode)
-        //{
-        gyroAngle -= Input.gyro.rotationRateUnbiased.y;
-        if (Input.GetButton("Target Left")) { gyroRotation -= 1f; }
-        if (Input.GetButton("Target Right")) { gyroRotation += 1f; }
+        if (aimMode)
+        {
+            gyroAngle -= Input.gyro.rotationRateUnbiased.y;
+        }
+        else
+        {
+            gyroAngle = Mathf.Lerp(gyroAngle, 0, Time.fixedDeltaTime * 10f);
+        }
 
-        gyroRotation += gyroAngle * .1f;
+            /*
         if (calibrating)
         {
             if (Mathf.Abs(gyroUpDown) > .01f)
@@ -126,6 +129,7 @@ public class PlayerMover : MonoBehaviour
             }
         }
         gyroUpDown -= Input.gyro.rotationRateUnbiased.x;
+        */
 
         if (Input.GetButton("Stop"))
         {
@@ -135,7 +139,7 @@ public class PlayerMover : MonoBehaviour
         rotation = Mathf.LerpAngle(rotation, rotationTarget, Time.fixedDeltaTime * 10f);
 
         View.transform.position = transform.position + Shift;
-        View.transform.rotation = Quaternion.Euler(Vector3.up * (rotation + gyroRotation) + Vector3.right * gyroUpDown);
+        View.transform.rotation = Quaternion.Euler(Vector3.up * (rotation + gyroAngle));
     }
 
     private void OnTriggerEnter(Collider other)

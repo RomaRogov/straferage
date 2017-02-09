@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.AI;
 using System;
 using System.Collections;
 
@@ -7,19 +8,27 @@ public class EnemyCube : Enemy {
     public Transform[] WayPoints;
 
     private Rigidbody rbd;
-    private Transform currentPoint { get { return WayPoints[currentPointIndex]; } }
     private int currentPointIndex = 0;
+    private Transform currentPoint { get { return WayPoints[currentPointIndex]; } }
+    private NavMeshAgent agent;
 	
 	void Start ()
     {
         rbd = GetComponent<Rigidbody>();
-	}
+        agent = GetComponent<NavMeshAgent>();
+        agent.SetDestination(currentPoint.position);
+    }
 
     void Update()
     {
-        Vector3 dir = (currentPoint.position - transform.position).normalized;
-        dir.y = 0f;
-        rbd.AddForce(dir * 20f);
+        if (agent.remainingDistance < 1)
+        {
+            if (++currentPointIndex >= WayPoints.Length)
+            {
+                currentPointIndex = 0;
+            }
+            agent.SetDestination(currentPoint.position);
+        }
     }
 
     void OnTriggerEnter(Collider col)
@@ -34,10 +43,18 @@ public class EnemyCube : Enemy {
         }
     }
 
+    IEnumerator Move()
+    {
+        yield return new WaitForSeconds(3);
+        //agent.SetDestination(transform.position + new Vector3(UnityEngine.Random.r))
+    }
+
     protected override void OnDied()
     {
-        Destroy(myBody);
+        Destroy(this);
+        Destroy(GetComponent<NavMeshAgent>());
         Destroy(GetComponent<BoxCollider>());
+        
         Array.ForEach(GetComponentsInChildren<BoxCollider>(), col => col.enabled = true);
         Array.ForEach(GetComponentsInChildren<Rigidbody>(), r => {
             r.isKinematic = false;

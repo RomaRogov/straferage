@@ -121,7 +121,7 @@ public class PlayerShooter : MonoBehaviour
                     break;
                 case WeaponTypes.ROCKET:
                     RocketSound.Play();
-                    Instantiate(RocketFab).Init(rocketPower, transform.TransformPoint(Vector3.forward), transform.rotation, RocketExplosionFab);
+                    Instantiate(RocketFab).Init(rocketPower, shootingPowers[SelectedWeapon], transform.TransformPoint(Vector3.forward), transform.rotation, RocketExplosionFab);
                     lastShootTime = Time.time;
                     rocketPower = 0f;
                     break;
@@ -136,7 +136,7 @@ public class PlayerShooter : MonoBehaviour
         Vector3 direction = transform.forward + (randomizeDirection ? UnityEngine.Random.onUnitSphere * .05f : Vector3.zero);
         Array.ForEach(Physics.RaycastAll(transform.position, direction), hit =>
         {
-            Enemy shotEnemy = (hit.rigidbody ? hit.rigidbody.GetComponent<Enemy>() : null);
+            Enemy shotEnemy = (hit.collider ? hit.collider.GetComponent<Enemy>() : null);
             if (shotEnemy != null)
             {
                 shotEnemy.ApplyShot(power, hit.point, direction);
