@@ -8,9 +8,6 @@ public class PlayerShooter : MonoBehaviour
 {
     public enum WeaponTypes { GUN = 0, SHOTGUN, MACHINE_GUN, ROCKET, SNIPER_GUN }
 
-    public GameObject DustParticleFab;
-    public Rocket RocketFab;
-    public GameObject RocketExplosionFab;
     public Light WeaponSpark;
     public AudioSource PistolSound;
     public AudioSource ShotgunSound;
@@ -121,7 +118,7 @@ public class PlayerShooter : MonoBehaviour
                     break;
                 case WeaponTypes.ROCKET:
                     RocketSound.Play();
-                    Instantiate(RocketFab).Init(rocketPower, shootingPowers[SelectedWeapon], transform.TransformPoint(Vector3.forward), transform.rotation, RocketExplosionFab);
+                    Projectile.Fire<Rocket>(shootingPowers[SelectedWeapon], transform.TransformPoint(Vector3.forward), transform.rotation).SetPower(rocketPower);
                     lastShootTime = Time.time;
                     rocketPower = 0f;
                     break;
@@ -141,7 +138,7 @@ public class PlayerShooter : MonoBehaviour
             {
                 shotEnemy.ApplyShot(power, hit.point, direction);
             }
-            Instantiate(instance.DustParticleFab, hit.point, Quaternion.identity);
+            Instantiate(PrefabAccessor.Instance.DustParticle, hit.point, Quaternion.identity);
         });
     }
 
