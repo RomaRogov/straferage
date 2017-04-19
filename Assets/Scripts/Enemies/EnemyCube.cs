@@ -17,6 +17,8 @@ public class EnemyCube : Enemy {
         rbd = GetComponent<Rigidbody>();
         agent = GetComponent<NavMeshAgent>();
         agent.SetDestination(currentPoint.position);
+
+        StartCoroutine(Shoot());
     }
 
     void Update()
@@ -43,10 +45,12 @@ public class EnemyCube : Enemy {
         }
     }
 
-    IEnumerator Move()
+    IEnumerator Shoot()
     {
         yield return new WaitForSeconds(3);
         //agent.SetDestination(transform.position + new Vector3(UnityEngine.Random.r))
+        Projectile.Fire<Fireball>(10f, transform.position + Vector3.up * 2f, Quaternion.FromToRotation(transform.position, Player.Instance.transform.position), gameObject);
+        StartCoroutine(Shoot());
     }
 
     protected override void OnDied()

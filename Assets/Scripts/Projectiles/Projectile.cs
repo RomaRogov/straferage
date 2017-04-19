@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,24 +10,35 @@ public class Projectile : MonoBehaviour
     protected float expRadius;
     protected GameObject owner;
 
-    public static T Fire<T>(float damage, Vector3 position, Quaternion rotation) where T : Projectile
+    public static T Fire<T>(float damage, Vector3 position, Quaternion rotation, GameObject owner) where T : Projectile
     {
         Projectile instance = (T)Instantiate(PrefabAccessor.GetPrefabByType<T>());
 
         instance.damage = damage;
         instance.transform.position = position;
         instance.transform.rotation = rotation;
+        instance.owner = owner;
+        instance.StartCoroutine(WaitForD)
 
         return (T)instance;
     }
 
+    private IEnumerator WaitForDestroy()
+    {
+        yield return new WaitForSeconds(30f);
+        Destroy(gameObject);
+        AfterDestroy();
+    }
+
     protected virtual void AfterDestroy()
     {
-        //explosion
+        //to override: explosion
     }
 
     void OnCollisionEnter(Collision collision)
     {
+        if (collision.gameObject == owner) { return; }
+
         if (expRadius > 0)
         {
             Array.ForEach(Physics.OverlapSphere(transform.position, expRadius), col =>

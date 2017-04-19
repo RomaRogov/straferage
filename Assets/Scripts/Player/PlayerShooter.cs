@@ -118,7 +118,7 @@ public class PlayerShooter : MonoBehaviour
                     break;
                 case WeaponTypes.ROCKET:
                     RocketSound.Play();
-                    Projectile.Fire<Rocket>(shootingPowers[SelectedWeapon], transform.TransformPoint(Vector3.forward), transform.rotation).SetPower(rocketPower);
+                    Projectile.Fire<Rocket>(shootingPowers[SelectedWeapon], transform.TransformPoint(Vector3.forward), transform.rotation, gameObject).SetPower(rocketPower);
                     lastShootTime = Time.time;
                     rocketPower = 0f;
                     break;
